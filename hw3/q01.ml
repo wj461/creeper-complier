@@ -295,10 +295,14 @@ let generate_state fmt q cmp' index_map first_flag =
     Format.fprintf fmt "\nand state%d b =\n" index;
   if cmp' = Cmap.empty then
     Format.fprintf fmt "  b.last <- b.current"
+  else if Cmap.mem '#' cmp' then
+    Format.fprintf
+      fmt
+      "  state%d b\n "
+      (Smap.find (Cmap.find '#' cmp') index_map)
   else (
     Format.fprintf fmt "  try\n    match next_char b with\n ";
     generate_match fmt cmp' index_map;
-
     Format.fprintf
       fmt
       "\n    with\n     | End_of_file -> failwith \"End_of_file\"")
@@ -336,4 +340,19 @@ let generate str autom =
 
   close_out ch
 
-let () = generate "test.ml" a
+let r3 = Concat (Star (Character ('a', 1)), Character ('b', 1))
+
+let a = make_dfa r3
+
+let () = generate "a.ml" a
+
+let r4 =
+  Concat
+    ( Concat
+        ( Union (Character ('b', 1), Epsilon)
+        , Star (Concat (Character ('a', 1), Character ('b', 2))) )
+    , Union (Character ('a', 2), Epsilon) )
+
+let a = make_dfa r4
+
+let () = generate "a.ml" a
